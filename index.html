@@ -1,0 +1,637 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0b0b0b"><style>*,*::before,*::after{box-sizing:border-box}:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style></head><body><title>Make Up Your Mind</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;800;900&family=Instrument+Sans:wght@400;600&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: one-screen phone arcade game. Black/white intro, chrome play field, three lanes, tiered rewards. */
+:root{
+  --ink:#0b0b0b;
+  --paper:#f6f6f2;
+  --grey:#8c8c87;
+  --soft:#dcdcd6;
+  --display:'Unbounded', 'Arial Black', Impact, sans-serif;
+  --body:'Instrument Sans', 'Helvetica Neue', Arial, sans-serif;
+  --mono:'IBM Plex Mono', ui-monospace, Menlo, monospace;
+  color-scheme: light;
+}
+@property --split{syntax:'<percentage>';inherits:false;initial-value:50%}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{background:var(--ink);color:var(--paper);font-family:var(--body);font-size:16px;overflow:hidden;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;touch-action:manipulation}
+button{font:inherit;color:inherit;cursor:pointer;touch-action:manipulation}
+button:focus-visible{outline:3px solid var(--grey);outline-offset:3px}
+.screen{position:absolute;inset:0;display:flex;flex-direction:column;overflow-y:auto;padding-block:16px 20px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{width:100%;max-width:480px;margin:0 auto;flex:1;display:flex;flex-direction:column;gap:16px;min-height:0}
+.label{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;font-weight:600}
+.wordmark{font-family:var(--display);font-weight:800;font-size:13px;letter-spacing:.18em;cursor:default}
+.btn{display:block;width:100%;padding:18px 20px;border:2.5px solid var(--paper);background:var(--paper);color:var(--ink);font-family:var(--display);font-weight:800;font-size:18px;letter-spacing:.06em;text-transform:uppercase;transition:transform .08s}
+.btn:active{transform:translateY(2px) scale(.99)}
+.btn.ghost{background:transparent;color:var(--paper)}
+.btn[disabled]{opacity:.35;pointer-events:none}
+.spacer{flex:1}
+.split-bg{background:linear-gradient(90deg,var(--ink) var(--split),var(--paper) var(--split));isolation:isolate}
+.blend{mix-blend-mode:difference;color:#fff}
+
+/* ---------- INTRO ---------- */
+#intro{animation:waver 2.6s ease-in-out infinite alternate}
+@keyframes waver{from{--split:44%}to{--split:56%}}
+#intro .blend{display:flex;flex-direction:column;gap:16px;flex:1}
+#intro .top{display:flex;justify-content:space-between;align-items:center}
+#intro h1{font-family:var(--display);font-weight:900;font-size:clamp(40px,13vw,66px);line-height:.92;letter-spacing:-.02em;margin:4px 0 0;text-wrap:balance}
+#intro .sub{font-size:17px;line-height:1.45;max-width:34ch;margin:0}
+.buddies{display:flex;justify-content:center;align-items:flex-end;height:96px}
+.buddy{display:flex;flex-direction:column;align-items:center;gap:6px;animation:hop 1s ease-in-out infinite}
+.buddy .body{width:54px;height:54px;background:#fff;border-radius:12px;position:relative}
+.buddy .body::before,.buddy .body::after{content:"";position:absolute;top:17px;width:9px;height:13px;background:#000;border-radius:2px;animation:blink 3.4s infinite}
+.buddy .body::before{left:13px}.buddy .body::after{right:13px}
+@keyframes hop{0%,100%{transform:translateY(0)}45%{transform:translateY(-22px) rotate(-4deg)}}
+@keyframes blink{0%,94%,100%{transform:scaleY(1)}97%{transform:scaleY(.1)}}
+.rules{list-style:none;margin:0;padding:0;border-top:2px solid #fff}
+.rules li{display:flex;gap:14px;align-items:center;padding:10px 0;border-bottom:2px solid #fff;font-size:15px;line-height:1.3}
+.rules svg{flex:none;width:30px;height:30px}
+.rules b{font-family:var(--display);font-weight:800;letter-spacing:.02em}
+#intro .btn{background:#fff;color:#000;border-color:#fff}
+#intro .tries{text-align:center;margin:-4px 0 0}
+
+/* ---------- COUNTDOWN ---------- */
+#count{align-items:center;justify-content:center;--split:50%}
+#countNum{font-family:var(--display);font-weight:900;font-size:min(56vw,260px);line-height:1}
+#countNum.pop{animation:pop .7s ease-out}
+#countSub{margin-top:8px}
+@keyframes pop{0%{transform:scale(1.6);opacity:0}30%{opacity:1}100%{transform:scale(.92)}}
+
+/* ---------- GAME ---------- */
+#game{padding:0;overflow:hidden}
+#cv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+#game.hurt #cv{filter:invert(1)}
+.hud{position:absolute;left:0;right:0;top:0;padding-top:calc(12px + env(safe-area-inset-top,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:8px;pointer-events:none;color:var(--paper)}
+.hudrow{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.hearts{display:flex;gap:6px;background:var(--ink);padding:8px 10px}
+.hearts i{width:14px;height:14px;border:2.5px solid #fff;display:block;transition:background .2s,transform .2s}
+.hearts i.full{background:#fff}
+.hearts i.lost{transform:scale(.6) rotate(45deg)}
+#scoreTxt{background:var(--ink);padding:2px 12px;font-family:var(--display);font-weight:900;font-size:24px;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+#scoreTxt small{font-size:13px;opacity:.7;font-weight:800}
+.prog{height:10px;border:2px solid var(--ink);background:var(--paper);position:relative}
+.prog div{position:absolute;inset:0;background:var(--ink);transform-origin:left;transform:scaleX(0);transition:transform .25s}
+.prog span{position:absolute;top:-5px;bottom:-5px;width:3px;background:var(--ink)}
+.prog span:nth-of-type(1){left:33.33%}.prog span:nth-of-type(2){left:66.66%}
+.tiers{display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.08em;color:var(--ink);padding:0 calc(33.33% - 24px) 0 calc(33.33% - 24px)}
+.tiers b{background:var(--ink);color:var(--paper);padding:2px 6px;transition:background .2s}
+.tiers b.got{background:var(--paper);color:var(--ink);outline:2px solid var(--ink)}
+#muteBtn{pointer-events:auto;background:var(--ink);border:2px solid var(--ink);color:var(--paper);padding:6px 9px;font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.1em}
+.banner{position:absolute;left:0;right:0;top:38%;text-align:center;font-family:var(--display);font-weight:900;font-size:clamp(28px,9vw,44px);line-height:1;color:var(--ink);text-shadow:0 0 0 #fff,2px 2px 0 #fff,-2px -2px 0 #fff,2px -2px 0 #fff,-2px 2px 0 #fff;pointer-events:none;opacity:0;padding:0 16px;text-wrap:balance}
+.banner.show{animation:ban 1.4s ease-out forwards}
+@keyframes ban{0%{opacity:0;transform:scale(1.6)}15%{opacity:1;transform:scale(1)}75%{opacity:1}100%{opacity:0;transform:translateY(-20px)}}
+.hint{position:absolute;bottom:calc(190px + env(safe-area-inset-bottom,0px));width:50%;text-align:center;color:var(--ink);pointer-events:none;transition:opacity .6s}
+.hint.l{left:0}.hint.r{right:0}
+.hint .tap{width:44px;height:44px;border:3px solid var(--ink);border-radius:50%;margin:0 auto 8px;animation:tap 1s ease-out infinite}
+@keyframes tap{0%{transform:scale(.6);opacity:1}100%{transform:scale(1.4);opacity:0}}
+
+/* ---------- LOSE ---------- */
+#lose{justify-content:center}
+.result{font-family:var(--display);font-weight:900;font-size:clamp(40px,13vw,64px);line-height:.95;margin:0;letter-spacing:-.02em;text-wrap:balance}
+.bigscore{font-family:var(--display);font-weight:900;font-size:clamp(64px,22vw,110px);line-height:.9;font-variant-numeric:tabular-nums}
+.bigscore small{font-size:.32em}
+#lose p{margin:0;font-size:17px;line-height:1.45;max-width:32ch}
+
+/* ---------- WIN ---------- */
+#win{background:var(--ink);color:var(--paper)}
+#win .hudbar{display:flex;justify-content:space-between;align-items:center;padding-bottom:12px;border-bottom:2px solid var(--paper)}
+#win .huge{font-family:var(--display);font-weight:900;font-size:clamp(84px,30vw,150px);line-height:.85;margin:0;letter-spacing:-.04em}
+#win .huge small{display:block;font-size:.3em;letter-spacing:.02em;margin-top:10px}
+.codebox{background:var(--paper);color:var(--ink);padding:16px;display:flex;flex-direction:column;gap:8px}
+.codebox .code{font-family:var(--mono);font-weight:600;font-size:clamp(24px,8vw,34px);letter-spacing:.08em}
+.codebox .row{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.copy{border:2px solid var(--ink);background:transparent;color:var(--ink);padding:8px 12px;font-family:var(--mono);font-weight:600;font-size:12px;letter-spacing:.1em}
+.live{border:2px solid var(--paper);overflow:hidden;white-space:nowrap}
+.live .marq{display:inline-block;padding:8px 0;font-family:var(--mono);font-weight:600;font-size:12px;letter-spacing:.16em;animation:marq 6s linear infinite}
+@keyframes marq{to{transform:translateX(-50%)}}
+.proof{display:grid;grid-template-columns:1fr 1fr;gap:10px;font-family:var(--mono);font-size:12px}
+.proof div{display:flex;flex-direction:column;gap:4px}
+.proof b{font-size:17px;font-variant-numeric:tabular-nums;letter-spacing:.04em}
+.redeem{position:relative;overflow:hidden;width:100%;background:transparent;color:var(--paper);border:2.5px solid var(--paper);padding:16px;font-family:var(--display);font-weight:800;font-size:14px;letter-spacing:.08em;text-transform:uppercase;touch-action:none}
+.redeem .fill{position:absolute;inset:0;background:var(--paper);transform-origin:left;transform:scaleX(0)}
+.redeem .txt{position:relative;mix-blend-mode:difference;color:#fff}
+.stamp{border:3px solid var(--paper);padding:14px;text-align:center;font-family:var(--display);font-weight:900;font-size:22px;letter-spacing:.06em;transform:rotate(-3deg)}
+.stamp small{display:block;font-family:var(--mono);font-size:12px;font-weight:600;letter-spacing:.08em;margin-top:6px}
+#win .note{font-size:14px;line-height:1.45;margin:0;color:var(--soft)}
+#win a{color:var(--paper)}
+#confetti{position:fixed;inset:0;pointer-events:none;z-index:20}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--paper);border:2px solid var(--paper);padding:10px 16px;font-family:var(--mono);font-size:13px;z-index:30}
+
+@media (prefers-reduced-motion: reduce){
+  #intro,.buddy,.hint .tap{animation:none}
+  .live .marq{animation-duration:20s}
+}
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="tee" viewBox="0 0 100 100"><path fill="currentColor" d="M30 10H40Q50 22 60 10H70L95 30L82 46L75 40V92H25V40L18 46L5 30Z"/></symbol>
+    <symbol id="doubt" viewBox="0 0 100 100"><rect x="10" y="10" width="80" height="80" rx="10" fill="none" stroke="currentColor" stroke-width="9"/><text x="50" y="72" text-anchor="middle" font-family="Unbounded, Arial Black, sans-serif" font-weight="900" font-size="56" fill="currentColor">?</text></symbol>
+    <symbol id="heart" viewBox="0 0 100 100"><rect x="18" y="18" width="64" height="64" fill="currentColor"/></symbol>
+  </defs>
+</svg>
+
+<!-- INTRO -->
+<section class="screen split-bg" id="intro">
+  <div class="wrap">
+    <div class="blend">
+      <div class="top">
+        <span class="wordmark" id="mark">INDECISIVE</span>
+        <span class="label">Pop-up only</span>
+      </div>
+      <h1>GRAB THE DROPS. DODGE THE DOUBTS.</h1>
+      <div class="buddies">
+        <div class="buddy"><div class="body"></div></div>
+      </div>
+      <p class="sub">Tap left or right to move. The more drops you catch, the bigger your discount: <b>10 = 10% off</b>, <b>20 = 20% off</b>, <b><span id="targetTxt">30</span> = 30% off</b>.</p>
+      <ul class="rules">
+        <li><svg><use href="#tee"/></svg><span><b>Grab the drops.</b> Every tee is a point. Let one fall past you and it costs a life.</span></li>
+        <li><svg><use href="#doubt"/></svg><span><b>Dodge the doubts.</b> Hit a ? block and you lose a life.</span></li>
+        <li><svg><use href="#heart"/></svg><span><b>3 lives.</b> It speeds up as you go. Your discount locks in the moment you hit 10, 20 or 30.</span></li>
+      </ul>
+      <div class="spacer"></div>
+      <button class="btn" id="playBtn">Play</button>
+      <p class="label tries" id="triesTxt"></p>
+    </div>
+  </div>
+</section>
+
+<!-- COUNTDOWN -->
+<section class="screen split-bg" id="count" hidden>
+  <div class="blend" style="text-align:center"><div id="countNum">3</div><div class="label" id="countSub">Tap left · Tap right</div></div>
+</section>
+
+<!-- GAME -->
+<section class="screen" id="game" hidden>
+  <canvas id="cv"></canvas>
+  <div class="hud">
+    <div class="hudrow">
+      <div class="hearts" id="hearts"><i class="full"></i><i class="full"></i><i class="full"></i></div>
+      <div id="scoreTxt">0<small> / 30</small></div>
+      <button id="muteBtn" aria-label="Toggle sound">SOUND ON</button>
+    </div>
+    <div class="prog"><div id="progBar"></div><span></span><span></span></div>
+    <div class="tiers" id="tiers"><b>10%</b><b>20%</b><b>30%</b></div>
+  </div>
+  <div class="hint l" id="hintL"><div class="tap"></div><div class="label">Tap left</div></div>
+  <div class="hint r" id="hintR"><div class="tap"></div><div class="label">Tap right</div></div>
+  <div class="banner" id="banner"></div>
+</section>
+
+<!-- LOSE -->
+<section class="screen" id="lose" hidden>
+  <div class="wrap" style="justify-content:center">
+    <span class="label" id="loseLabel">Game over</span>
+    <div class="bigscore" id="loseScore">0<small> / 30</small></div>
+    <h2 class="result" id="loseTitle">SO CLOSE.</h2>
+    <p id="loseMsg"></p>
+    <div class="spacer"></div>
+    <button class="btn" id="retryBtn">Try again</button>
+    <button class="btn ghost" id="homeBtn">Back to start</button>
+  </div>
+</section>
+
+<!-- WIN -->
+<section class="screen" id="win" hidden>
+  <div class="wrap">
+    <div class="hudbar"><span class="wordmark">INDECISIVE</span><span class="label" id="caughtTxt">30 drops caught</span></div>
+    <h2 class="huge"><span id="pctTxt">30%</span><small>OFF. ALL YOURS.</small></h2>
+    <div class="live"><span class="marq" id="marq"></span></div>
+    <div class="codebox">
+      <span class="label">Discount code</span>
+      <div class="row"><span class="code" id="codeTxt">INDECISIVE30</span><button class="copy" id="copyBtn">COPY</button></div>
+    </div>
+    <div class="proof">
+      <div><span class="label">Claim ID</span><b id="claimTxt">IND-0000</b></div>
+      <div><span class="label">Live time</span><b id="clock">00:00:00</b></div>
+      <div><span class="label">Won</span><b id="wonTxt" style="font-size:14px">—</b></div>
+      <div><span class="label">Status</span><b id="statusTxt" style="font-size:14px">Unused</b></div>
+    </div>
+    <div id="redeemArea"></div>
+    <button class="btn ghost" id="moreBtn" hidden>Try for more</button>
+    <p class="note">Show this screen at the counter. The ticking clock proves it's live, so screenshots don't count. Shopping online later? Use the code at <a href="https://indecisive.in" target="_blank" rel="noopener">indecisive.in</a>.</p>
+  </div>
+</section>
+
+<canvas id="confetti" hidden></canvas>
+
+<script>
+(function(){
+/* ===== EDIT THESE FOR EACH POP-UP ===== */
+const CONFIG = {
+  /* drops needed -> discount. Create each code in Shopify / POS first */
+  TIERS: [
+    { at: 10, pct: 10, code: 'INDECISIVE10' },
+    { at: 20, pct: 20, code: 'INDECISIVE20' },
+    { at: 30, pct: 30, code: 'INDECISIVE30' }
+  ],
+  TARGET: 30,                     // game ends here
+  MAX_ATTEMPTS: 3                 // tries per phone
+};
+const tierFor = n => CONFIG.TIERS.filter(t => n >= t.at).pop() || null;
+/* ===================================== */
+
+const INK = '#0b0b0b', PAPER = '#f6f6f2';
+const $ = s => document.querySelector(s);
+const rnd = n => Math.floor(Math.random()*n);
+const KEY = 'indecisive-popup-game-v4';
+const fresh = () => ({attempts:0, best:0, won:false, tier:0, claimId:null, wonAt:null, redeemedAt:null});
+let S = fresh();
+try { const raw = localStorage.getItem(KEY); if (raw) S = Object.assign(fresh(), JSON.parse(raw)); } catch(e){}
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e){} };
+function show(id){ document.querySelectorAll('.screen').forEach(s => s.hidden = s.id !== id); }
+
+/* ===== AUDIO ===== */
+let ac, master, muted = false, musicT = null, nextBeat = 0, beatIdx = 0, noiseBuf;
+function ensureAudio(){
+  try{
+    if (!ac){
+      ac = new (window.AudioContext||window.webkitAudioContext)();
+      master = ac.createGain(); master.gain.value = .9; master.connect(ac.destination);
+      noiseBuf = ac.createBuffer(1, ac.sampleRate*.05, ac.sampleRate);
+      const d = noiseBuf.getChannelData(0); for (let i=0;i<d.length;i++) d[i] = Math.random()*2-1;
+    }
+    if (ac.state === 'suspended') ac.resume();
+  }catch(e){}
+}
+function tone(f, d=.09, vol=.06, type='square', when){
+  if (!ac || muted) return;
+  try{
+    const t = when || ac.currentTime, o = ac.createOscillator(), g = ac.createGain();
+    o.type = type; o.frequency.setValueAtTime(f, t); g.gain.setValueAtTime(vol, t);
+    g.gain.exponentialRampToValueAtTime(.0001, t + d);
+    o.connect(g).connect(master); o.start(t); o.stop(t + d + .02);
+  }catch(e){}
+}
+function kick(t){ if (muted) return; const o = ac.createOscillator(), g = ac.createGain(); o.frequency.setValueAtTime(150,t); o.frequency.exponentialRampToValueAtTime(42,t+.12); g.gain.setValueAtTime(.32,t); g.gain.exponentialRampToValueAtTime(.001,t+.16); o.connect(g).connect(master); o.start(t); o.stop(t+.18); }
+function hat(t, v=.05){ if (muted) return; const s = ac.createBufferSource(), f = ac.createBiquadFilter(), g = ac.createGain(); s.buffer = noiseBuf; f.type='highpass'; f.frequency.value = 7000; g.gain.setValueAtTime(v,t); g.gain.exponentialRampToValueAtTime(.001,t+.04); s.connect(f).connect(g).connect(master); s.start(t); }
+const BASS = [55,55,65.4,49];
+function startMusic(){
+  if (!ac) return; stopMusic(); nextBeat = ac.currentTime + .05; beatIdx = 0;
+  musicT = setInterval(() => {
+    const prog = G ? Math.min(1, G.score/CONFIG.TARGET) : 0;
+    const step = 60/(118 + 34*prog)/2;
+    while (nextBeat < ac.currentTime + .15){
+      if (beatIdx % 2 === 0) kick(nextBeat); else hat(nextBeat);
+      if (beatIdx % 8 === 4) hat(nextBeat, .12);
+      if (beatIdx % 4 === 2) tone(BASS[(beatIdx>>4)%4]*2, .12, .05, 'triangle', nextBeat);
+      nextBeat += step; beatIdx++;
+    }
+  }, 25);
+}
+function stopMusic(){ if (musicT){ clearInterval(musicT); musicT = null; } }
+const NOTES = [523,587,659,784,880,1047,1175,1319];
+function buzz(p){ try{ navigator.vibrate && navigator.vibrate(p); }catch(e){} }
+$('#muteBtn').addEventListener('pointerdown', e => { e.stopPropagation(); muted = !muted; $('#muteBtn').textContent = muted ? 'SOUND OFF' : 'SOUND ON'; });
+
+/* ===== INTRO ===== */
+function renderIntro(){
+  const left = CONFIG.MAX_ATTEMPTS - S.attempts, btn = $('#playBtn');
+  if (left <= 0){
+    btn.disabled = true; btn.textContent = 'No tries left';
+    $('#triesTxt').textContent = 'Best: ' + S.best + '. Thanks for playing. Come say hi at the rack.';
+  } else {
+    btn.disabled = false; btn.textContent = S.attempts ? 'Play again' : 'Play';
+    $('#triesTxt').textContent = left + ' of ' + CONFIG.MAX_ATTEMPTS + (left===1?' try':' tries') + ' left' + (S.best ? ' · Best ' + S.best : '');
+  }
+  show('intro');
+}
+let taps = 0, tapT;
+$('#mark').addEventListener('click', () => {
+  taps++; clearTimeout(tapT); tapT = setTimeout(() => taps = 0, 2500);
+  if (taps >= 5){ taps = 0; S = fresh(); save(); renderIntro(); toast('Reset for a new player'); }
+});
+function begin(){
+  if (S.attempts >= CONFIG.MAX_ATTEMPTS || S.redeemedAt) return;
+  ensureAudio(); S.attempts++; save();
+  countdown(startGame);
+}
+$('#playBtn').addEventListener('click', begin);
+$('#retryBtn').addEventListener('click', begin);
+$('#homeBtn').addEventListener('click', renderIntro);
+
+function countdown(cb){
+  show('count'); const el = $('#countNum'); let n = 3;
+  const step = () => {
+    if (n === 0){ tone(1047,.2,.07); cb(); return; }
+    el.textContent = n; el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop');
+    tone(520,.1); n--; setTimeout(step, 650);
+  };
+  step();
+}
+
+/* ===== GAME ===== */
+const cv = $('#cv'), ctx = cv.getContext('2d');
+let W = 0, H = 0, DPR = 1, G = null, raf = 0, last = 0;
+function resize(){
+  DPR = Math.min(2, window.devicePixelRatio || 1);
+  W = cv.clientWidth || innerWidth; H = cv.clientHeight || innerHeight;
+  cv.width = W*DPR; cv.height = H*DPR; ctx.setTransform(DPR,0,0,DPR,0,0);
+}
+addEventListener('resize', () => { if (!$('#game').hidden) resize(); });
+const LANES = 3;
+const laneW = () => W/LANES;
+const laneX = lane => (lane + .5) * laneW();
+const runY = () => H - Math.max(110, H*.16);
+const runS = () => Math.min(laneW()*.5, 64);
+const itemS = () => Math.min(laneW()*.45, 58);
+
+function startGame(){
+  show('game'); resize();
+  G = { score:0, hearts:3, items:[], parts:[], floats:[], t:0, dist:0, streak:0, over:false, shake:0, hurtT:0,
+        spawnT:.8, runner:{lane:1, x:laneX(1)} };
+  ['#hintL','#hintR'].forEach(h => $(h).style.opacity = 1);
+  renderHud(); startMusic();
+  last = performance.now(); cancelAnimationFrame(raf); raf = requestAnimationFrame(frame);
+}
+function steer(dir){
+  if (!G || G.over) return;
+  const r = G.runner, n = Math.max(0, Math.min(LANES-1, r.lane + dir));
+  if (n === r.lane) return;
+  r.lane = n; tone(dir > 0 ? 330 : 260, .04, .035, 'triangle');
+}
+cv.addEventListener('pointerdown', e => { e.preventDefault(); const rect = cv.getBoundingClientRect(); steer(e.clientX - rect.left < rect.width/2 ? -1 : 1); });
+addEventListener('keydown', e => {
+  if ($('#game').hidden) return;
+  const k = e.key.toLowerCase();
+  if (k === 'a' || k === 'arrowleft') steer(-1);
+  if (k === 'd' || k === 'arrowright') steer(1);
+});
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden){ cancelAnimationFrame(raf); stopMusic(); }
+  else if (G && !G.over && !$('#game').hidden){ last = performance.now(); raf = requestAnimationFrame(frame); startMusic(); }
+});
+
+function spawn(){
+  const live = G.items.filter(i => !i.done);
+  const prev = live[live.length-1];
+  let lane = rnd(LANES);
+  let type = Math.random() < .58 ? 'drop' : 'doubt';
+  /* a drop never lands right behind a doubt in the same lane */
+  if (prev && prev.type === 'doubt' && type === 'drop' && prev.lane === lane && prev.y < itemS()*2) lane = (lane + 1 + rnd(LANES-1)) % LANES;
+  G.items.push({ lane, y: -itemS(), type, done:false, gone:false, seed: Math.random()*6 });
+}
+
+function frame(now){
+  const dt = Math.min(.033, (now - last)/1000); last = now;
+  update(dt); draw();
+  if (G && !G.over) raf = requestAnimationFrame(frame);
+}
+
+function update(dt){
+  G.t += dt;
+  const prog = Math.min(1, G.score/CONFIG.TARGET);
+  const speed = H * (.40 + .45*prog);
+  const interval = .8 - .35*prog;
+  G.dist += speed*dt;
+  if (G.t > 3) { $('#hintL').style.opacity = 0; $('#hintR').style.opacity = 0; }
+  G.spawnT -= dt;
+  if (G.spawnT <= 0){ spawn(); G.spawnT = interval * (.8 + Math.random()*.5); }
+  const R = G.runner; R.x += (laneX(R.lane) - R.x) * Math.min(1, dt*24);
+  const ry = runY(), rs = runS(), is = itemS();
+  for (const it of G.items){
+    it.y += speed*dt;
+    if (it.done) continue;
+    const dx = Math.abs(laneX(it.lane) - G.runner.x);
+    if (it.y + is/2 >= ry - rs/2 && it.y - is/2 <= ry + rs/2 && dx < laneW()*.45){
+      it.done = true;
+      if (it.type === 'drop'){ it.gone = true; collect(it); } else hurt(it, 'OUCH');
+    } else if (it.y - is/2 > ry + rs/2){
+      it.done = true;
+      if (it.type === 'drop') hurt(it, 'MISSED');
+    }
+    if (G.over) return;
+  }
+  G.items = G.items.filter(i => !i.gone && i.y < H + is);
+  G.parts.forEach(p => { p.x += p.vx*dt; p.y += p.vy*dt; p.vy += 900*dt; p.life -= dt; p.r += p.vr*dt; });
+  G.parts = G.parts.filter(p => p.life > 0);
+  G.floats.forEach(f => { f.y -= 60*dt; f.life -= dt; });
+  G.floats = G.floats.filter(f => f.life > 0);
+  G.shake = Math.max(0, G.shake - dt*40);
+}
+
+function burst(x, y, n){
+  for (let i=0;i<n;i++) G.parts.push({ x, y, vx:(Math.random()-.5)*520, vy:-Math.random()*520-80, life:.5+Math.random()*.4, s:4+Math.random()*7, r:Math.random()*6, vr:(Math.random()-.5)*12 });
+}
+function collect(it){
+  G.score++; G.streak++;
+  const x = laneX(it.lane);
+  burst(x, runY() - runS()/2, 14);
+  G.floats.push({ x, y: runY() - runS(), text: '+1', life: .7 });
+  tone(NOTES[(G.streak-1) % NOTES.length], .1, .06);
+  if (G.streak > 0 && G.streak % 8 === 0) banner(G.streak + ' IN A ROW!');
+  const hit = CONFIG.TIERS.find(t => t.at === G.score && t.at < CONFIG.TARGET);
+  if (hit){
+    banner(hit.pct + '% UNLOCKED!'); buzz([40,30,40]);
+    [392,523,659].forEach((f,i) => tone(f,.12,.06,'square', ac ? ac.currentTime + i*.07 : 0));
+  } else if (G.score === CONFIG.TARGET - 3) banner('3 MORE FOR 30%!');
+  renderHud();
+  if (G.score >= CONFIG.TARGET) endGame(true);
+}
+function hurt(it, word){
+  G.hearts--; G.streak = 0; G.shake = 14;
+  const x = laneX(it.lane);
+  G.floats.push({ x, y: runY() - runS(), text: word, life: .9 });
+  burst(x, runY(), 8);
+  tone(120, .25, .09, 'sawtooth'); buzz(140);
+  const g = $('#game'); g.classList.add('hurt'); setTimeout(() => g.classList.remove('hurt'), 110);
+  renderHud();
+  if (G.hearts <= 0) endGame(false);
+}
+function renderHud(){
+  $('#scoreTxt').innerHTML = G.score + '<small> / ' + CONFIG.TARGET + '</small>';
+  $('#progBar').style.transform = 'scaleX(' + Math.min(1, G.score/CONFIG.TARGET) + ')';
+  [...$('#hearts').children].forEach((h,i) => { h.className = i < G.hearts ? 'full' : 'lost'; });
+  [...$('#tiers').children].forEach((b,i) => b.classList.toggle('got', G.score >= CONFIG.TIERS[i].at));
+}
+let banT;
+function banner(text){ const b = $('#banner'); b.textContent = text; b.classList.remove('show'); void b.offsetWidth; b.classList.add('show'); clearTimeout(banT); banT = setTimeout(() => b.classList.remove('show'), 1500); }
+
+/* drawing */
+const FG = () => INK;
+const BG = () => PAPER;
+function chrome(){
+  const g = ctx.createLinearGradient(0, 0, W*.35, H);
+  [[0,'#fbfbfb'],[.12,'#a9a9a9'],[.24,'#ffffff'],[.38,'#7d7d7d'],[.5,'#e6e6e6'],[.62,'#8f8f8f'],[.76,'#fdfdfd'],[.9,'#9c9c9c'],[1,'#eeeeee']].forEach(([o,c]) => g.addColorStop(o,c));
+  ctx.fillStyle = g; ctx.fillRect(-20, -20, W + 40, H + 40);
+  /* moving sheen */
+  const sx = ((G.t*.35) % 1.6 - .3) * (W + H);
+  const sg = ctx.createLinearGradient(sx - 120, 0, sx + 120, H*.4);
+  sg.addColorStop(0,'rgba(255,255,255,0)'); sg.addColorStop(.5,'rgba(255,255,255,.55)'); sg.addColorStop(1,'rgba(255,255,255,0)');
+  ctx.fillStyle = sg; ctx.fillRect(-20, -20, W + 40, H + 40);
+}
+const TEE = [[30,10],[40,10],[50,21],[60,10],[70,10],[95,30],[82,46],[75,40],[75,92],[25,92],[25,40],[18,46],[5,30]];
+function drawTee(x, y, sz, col){
+  ctx.fillStyle = col; ctx.beginPath();
+  TEE.forEach(([px,py],i) => { const X = x + (px-50)/100*sz, Y = y + (py-50)/100*sz; i ? ctx.lineTo(X,Y) : ctx.moveTo(X,Y); });
+  ctx.closePath(); ctx.fill();
+}
+function roundRect(x, y, w, h, r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+function draw(){
+  ctx.save();
+  if (G.shake) ctx.translate((Math.random()-.5)*G.shake, (Math.random()-.5)*G.shake);
+  const lw = laneW(), is = itemS(), rs = runS(), ry = runY();
+  const fg = FG(), bg = BG();
+  chrome();
+  /* scrolling lane dividers */
+  ctx.fillStyle = fg; ctx.globalAlpha = .35;
+  const off = G.dist % 56;
+  for (let l=1;l<LANES;l++){ const mx = l*lw; for (let y = -56 + off; y < H; y += 56) ctx.fillRect(mx - 1.5, y, 3, 28); }
+  ctx.globalAlpha = 1;
+  /* items */
+  for (const it of G.items){
+    if (it.gone) continue;
+    const x = laneX(it.lane);
+    if (it.type === 'drop'){
+      ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.35)'; ctx.shadowOffsetY = 4; ctx.shadowBlur = 6;
+      drawTee(x, it.y, is, fg); ctx.restore();
+    } else {
+      ctx.save(); ctx.translate(x, it.y); ctx.rotate(Math.sin(G.t*7 + it.seed)*.22);
+      roundRect(-is*.42, -is*.42, is*.84, is*.84, 7); ctx.fillStyle = bg; ctx.fill();
+      ctx.lineWidth = 4; ctx.strokeStyle = fg; ctx.stroke();
+      ctx.fillStyle = fg; ctx.font = '900 ' + Math.round(is*.55) + 'px Unbounded, Arial Black, sans-serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('?', 0, 2);
+      ctx.restore();
+    }
+  }
+  /* runners */
+  { const r = G.runner, s = 0;
+    const tilt = (laneX(r.lane) - r.x) / lw * -.5;
+    const bob = Math.sin(G.t*14) * 2.5;
+    ctx.save(); ctx.translate(r.x, ry + bob); ctx.rotate(tilt);
+    ctx.shadowColor = 'rgba(0,0,0,.4)'; ctx.shadowOffsetY = 6; ctx.shadowBlur = 10;
+    roundRect(-rs/2, -rs/2, rs, rs, rs*.22); ctx.fillStyle = fg; ctx.fill();
+    ctx.shadowColor = 'transparent';
+    const look = Math.max(-1, Math.min(1, (laneX(r.lane) - r.x)/(lw*.3))) * rs*.08;
+    const blink = ((G.t + s*1.3) % 3.2) < .1 ? .15 : 1;
+    ctx.fillStyle = bg;
+    ctx.fillRect(-rs*.26 + look, -rs*.2, rs*.16, rs*.24*blink);
+    ctx.fillRect(rs*.10 + look, -rs*.2, rs*.16, rs*.24*blink);
+    ctx.fillRect(-rs*.14, rs*.16, rs*.28, rs*.06);
+    ctx.restore();
+  }
+  /* particles */
+  G.parts.forEach(p => {
+    ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.r); ctx.globalAlpha = Math.min(1, p.life*2);
+    ctx.fillStyle = (p.s > 7) ? INK : PAPER; ctx.fillRect(-p.s/2, -p.s/2, p.s, p.s); ctx.restore();
+  });
+  ctx.globalAlpha = 1;
+  /* floating text */
+  G.floats.forEach(f => {
+    ctx.globalAlpha = Math.min(1, f.life*2);
+    ctx.font = '900 20px Unbounded, Arial Black, sans-serif'; ctx.textAlign = 'center';
+    ctx.lineWidth = 5; ctx.strokeStyle = PAPER; ctx.strokeText(f.text, f.x, f.y);
+    ctx.fillStyle = INK; ctx.fillText(f.text, f.x, f.y);
+  });
+  ctx.globalAlpha = 1;
+  ctx.restore();
+}
+
+function endGame(won){
+  G.over = true; cancelAnimationFrame(raf); stopMusic();
+  S.best = Math.max(S.best, G.score); save();
+  const t = tierFor(G.score);
+  if (t){ draw(); setTimeout(() => win(t), 450); return; }
+  draw();
+  if (S.won){ setTimeout(() => { showWin(false); toast('No upgrade this time. Your ' + S.tier + '% is still yours.'); }, 700); return; }
+  setTimeout(() => {
+    const left = CONFIG.MAX_ATTEMPTS - S.attempts, sc = G.score, need = CONFIG.TARGET - sc;
+    $('#loseScore').innerHTML = sc + '<small> drops</small>';
+    const first = CONFIG.TIERS[0], gap = first.at - sc;
+    $('#loseTitle').textContent = gap <= 3 ? 'SO. CLOSE.' : 'TOO INDECISIVE.';
+    $('#loseLabel').textContent = 'Game over · Best ' + S.best;
+    $('#loseMsg').textContent = 'Catch ' + gap + ' more next time to unlock ' + first.pct + '% off. ' + (left > 0
+      ? 'You have ' + left + (left===1?' try':' tries') + ' left.'
+      : 'That was your last try on this phone. Thanks for playing.');
+    $('#retryBtn').hidden = left <= 0;
+    show('lose');
+  }, 700);
+}
+
+/* ===== WIN ===== */
+function win(t){
+  const A = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+  const improved = !S.won || t.pct > S.tier;
+  if (improved){
+    let id = 'IND-'; for (let i=0;i<4;i++) id += A[rnd(A.length)];
+    S.won = true; S.tier = t.pct; S.claimId = id; S.wonAt = Date.now(); S.redeemedAt = null; S.caught = G.score; save();
+  }
+  [523,659,784,1047,1319].forEach((f,i) => tone(f,.16,.06,'square', ac ? ac.currentTime + i*.1 : 0)); buzz([60,40,60,40,120]);
+  showWin(improved);
+  if (!improved) toast('Your ' + S.tier + '% is still the best. Nice try.');
+}
+const fmt = ts => { const d = new Date(ts); return d.toLocaleDateString(undefined,{day:'2-digit',month:'short'}) + ' ' + d.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'}); };
+let clockT;
+function showWin(celebrate){
+  const t = CONFIG.TIERS.find(x => x.pct === S.tier) || CONFIG.TIERS[0];
+  $('#codeTxt').textContent = t.code;
+  $('#pctTxt').textContent = t.pct + '%';
+  $('#caughtTxt').textContent = (S.caught || t.at) + ' drops caught';
+  const left = CONFIG.MAX_ATTEMPTS - S.attempts;
+  $('#moreBtn').hidden = !(left > 0 && t.pct < 30 && !S.redeemedAt);
+  $('#moreBtn').textContent = 'Try for more (' + left + (left === 1 ? ' try' : ' tries') + ' left)';
+  $('#claimTxt').textContent = S.claimId || '—';
+  $('#wonTxt').textContent = S.wonAt ? fmt(S.wonAt) : '—';
+  $('#marq').textContent = ('LIVE · VALID · ' + (S.claimId||'') + ' · ' + t.pct + '% OFF · INDECISIVE · ').repeat(4);
+  const tick = () => { $('#clock').textContent = new Date().toLocaleTimeString(undefined,{hour12:false}); };
+  tick(); clearInterval(clockT); clockT = setInterval(tick, 1000);
+  renderRedeem(); show('win');
+  if (celebrate) confetti();
+}
+$('#moreBtn').addEventListener('click', begin);
+$('#copyBtn').addEventListener('click', () => {
+  const t = $('#codeTxt').textContent;
+  const fallback = () => { const r = document.createRange(); r.selectNodeContents($('#codeTxt')); const s = getSelection(); s.removeAllRanges(); s.addRange(r); toast('Code selected. Copy it from here.'); };
+  try { navigator.clipboard.writeText(t).then(() => toast('Copied ' + t), fallback); } catch(e){ fallback(); }
+});
+function renderRedeem(){
+  const area = $('#redeemArea');
+  if (S.redeemedAt){
+    $('#statusTxt').textContent = 'Used';
+    area.innerHTML = '<div class="stamp">REDEEMED<small>' + fmt(S.redeemedAt) + '</small></div>';
+    return;
+  }
+  $('#statusTxt').textContent = 'Unused';
+  area.innerHTML = '<button class="redeem" id="redeemBtn"><span class="fill"></span><span class="txt">Staff: hold 2 sec to mark used</span></button>';
+  const b = $('#redeemBtn'), fill = b.querySelector('.fill'); let st = 0, rf;
+  const reset = () => { cancelAnimationFrame(rf); st = 0; fill.style.transform = 'scaleX(0)'; };
+  const loop = now => {
+    const k = Math.min(1, (now - st)/2000); fill.style.transform = 'scaleX(' + k + ')';
+    if (k >= 1){ S.redeemedAt = Date.now(); save(); buzz(80); renderRedeem(); $('#moreBtn').hidden = true; toast('Marked as used'); return; }
+    rf = requestAnimationFrame(loop);
+  };
+  b.addEventListener('pointerdown', e => { e.preventDefault(); st = performance.now(); rf = requestAnimationFrame(loop); });
+  ['pointerup','pointerleave','pointercancel'].forEach(ev => b.addEventListener(ev, () => { if (st) reset(); }));
+  b.addEventListener('contextmenu', e => e.preventDefault());
+}
+function confetti(){
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const c = $('#confetti'), x = c.getContext('2d'); c.hidden = false;
+  const d = Math.min(2, devicePixelRatio || 1), CW = c.width = innerWidth*d, CH = c.height = innerHeight*d;
+  const P = Array.from({length:150}, () => ({ x: Math.random()*CW, y: -Math.random()*CH*.6, s:(6+Math.random()*10)*d, vy:(2+Math.random()*4)*d, vx:(Math.random()-.5)*2*d, r:Math.random()*6, vr:(Math.random()-.5)*.3, w: Math.random() < .5, tee: Math.random() < .3 }));
+  const end = performance.now() + 4000;
+  const loop = now => {
+    x.clearRect(0,0,CW,CH);
+    P.forEach(p => { p.y += p.vy; p.x += p.vx; p.r += p.vr;
+      x.save(); x.translate(p.x,p.y); x.rotate(p.r);
+      x.fillStyle = p.w ? PAPER : INK; x.strokeStyle = p.w ? INK : PAPER; x.lineWidth = 1.5*d;
+      x.fillRect(-p.s/2,-p.s/4,p.s,p.s/2); x.strokeRect(-p.s/2,-p.s/4,p.s,p.s/2); x.restore(); });
+    if (now < end) requestAnimationFrame(loop); else { x.clearRect(0,0,CW,CH); c.hidden = true; }
+  };
+  requestAnimationFrame(loop);
+}
+let toastT;
+function toast(msg){
+  let t = document.querySelector('.toast'); if (!t){ t = document.createElement('div'); t.className = 'toast'; document.body.appendChild(t); }
+  t.textContent = msg; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => t.hidden = true, 2000);
+}
+try { navigator.wakeLock && navigator.wakeLock.request('screen').catch(()=>{}); } catch(e){}
+
+if (S.won) showWin(false); else renderIntro();
+})();
+</script>
+</body></html>
