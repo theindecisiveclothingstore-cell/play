@@ -30,11 +30,10 @@ button:focus-visible{outline:3px solid var(--grey);outline-offset:3px}
 .btn.ghost{background:transparent;color:var(--paper)}
 .btn[disabled]{opacity:.35;pointer-events:none}
 .spacer{flex:1}
-.split-bg{background:linear-gradient(90deg,var(--ink) var(--split),var(--paper) var(--split));isolation:isolate}
-.blend{mix-blend-mode:difference;color:#fff}
+.split-bg{background:var(--ink)}
+.blend{color:#fff}
 
 /* ---------- INTRO ---------- */
-#intro{animation:waver 2.6s ease-in-out infinite alternate}
 @keyframes waver{from{--split:44%}to{--split:56%}}
 #intro .blend{display:flex;flex-direction:column;gap:16px;flex:1}
 #intro .top{display:flex;justify-content:space-between;align-items:center}
